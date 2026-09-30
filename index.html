@@ -63,7 +63,7 @@
 </div>
 
 <script>
-fetch('data/信号历史.json')
+fetch('data/signal_history.json')
   .then(r => r.json())
   .then(history => {
     if (!history.length) return;

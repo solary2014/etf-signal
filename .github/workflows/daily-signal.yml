@@ -31,6 +31,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add data/信号历史.json
+          git add data/signal_history.json
           git diff --cached --quiet || git commit -m "更新信号 $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push

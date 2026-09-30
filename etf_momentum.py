@@ -25,7 +25,7 @@ except Exception:
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE, "data")
-DATA_FILE = os.path.join(DATA_DIR, "信号历史.json")
+DATA_FILE = os.path.join(DATA_DIR, "signal_history.json")
 
 M_DAYS = 25
 TZ_CN = timezone(timedelta(hours=8))  # 北京时间
