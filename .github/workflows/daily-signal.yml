@@ -1,0 +1,36 @@
+name: 每日ETF信号
+
+on:
+  schedule:
+    # 北京时间 13:59 = UTC 05:59（无夏令时问题，中国不用夏令时）
+    - cron: "59 5 * * 1-5"   # 周一到周五 13:59（北京时间）
+  workflow_dispatch:           # 允许手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 运行动量信号
+        run: python etf_momentum.py
+
+      - name: 提交结果
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/信号历史.json
+          git diff --cached --quiet || git commit -m "更新信号 $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
