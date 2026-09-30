@@ -3,107 +3,253 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ETF 动量轮动信号</title>
+<title>ETF 动量轮动 · 量化信号终端</title>
 <style>
-  :root { --bg:#faf9f6; --card:#ffffff; --text:#1a1a1a; --muted:#777; --red:#d33; --green:#1a7f37; --blue:#185fa5; }
+  :root {
+    --bg: #0a0e17;
+    --panel: #111827;
+    --panel2: #0d1526;
+    --border: #1e2a3f;
+    --text: #e5edf8;
+    --muted: #5a6b85;
+    --cyan: #22d3ee;
+    --blue: #3b82f6;
+    --purple: #a78bfa;
+    --up: #ff4d4f;
+    --down: #22c55e;
+    --amber: #f59e0b;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:24px; }
-  .wrap { max-width: 960px; margin:0 auto; }
-  h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
-  .sub { color:var(--muted); font-size:13px; margin-bottom:24px; }
-  .card { background:var(--card); border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
-  .latest { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-  .latest .action { font-size:28px; font-weight:700; }
-  .buy { color:var(--red); }
-  .hold { color:var(--green); }
-  .switch { color:#b8860b; }
-  .tag { font-size:13px; color:var(--muted); }
-  .big { font-size:20px; font-weight:600; }
-  table { width:100%; border-collapse:collapse; font-size:14px; }
-  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid #eee; }
-  th { color:var(--muted); font-weight:500; font-size:13px; }
-  tr.top td:first-child::before { content:"● "; color:var(--red); }
-  .pos { color:var(--red); }
-  .neg { color:var(--green); }
-  .muted { color:var(--muted); }
-  @media (max-width:600px){ body{padding:12px;} .latest .action{font-size:22px;} }
+  body {
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 28px 20px;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(59,130,246,.12), transparent),
+      radial-gradient(ellipse 50% 40% at 90% 10%, rgba(167,139,250,.10), transparent);
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+
+  /* 头部 */
+  .header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: #04121c;
+    box-shadow: 0 0 20px rgba(34,211,238,.35);
+  }
+  .brand h1 { font-size: 20px; font-weight: 600; letter-spacing: .5px; }
+  .brand .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .status {
+    font-size: 12px; color: var(--cyan);
+    border: 1px solid rgba(34,211,238,.3);
+    background: rgba(34,211,238,.06);
+    padding: 5px 12px; border-radius: 20px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .status::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  /* 主卡片：当前信号 */
+  .hero {
+    background: linear-gradient(135deg, rgba(34,211,238,.08), rgba(59,130,246,.08));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: ""; position: absolute; top: -40%; right: -10%;
+    width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,211,238,.18), transparent 70%);
+    pointer-events: none;
+  }
+  .hero .label { font-size: 12px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+  .hero .action { font-size: 40px; font-weight: 700; margin: 6px 0 2px; letter-spacing: .5px; }
+  .hero .name { font-size: 22px; font-weight: 600; }
+  .hero .meta { display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; }
+  .hero .meta .item { text-align: left; }
+  .hero .meta .item .k { font-size: 11px; color: var(--muted); }
+  .hero .meta .item .v { font-size: 18px; font-weight: 600; }
+
+  .buy { color: var(--up); text-shadow: 0 0 24px rgba(255,77,79,.5); }
+  .hold { color: var(--down); text-shadow: 0 0 24px rgba(34,197,94,.5); }
+  .switch { color: var(--amber); text-shadow: 0 0 24px rgba(245,158,11,.5); }
+  .none { color: var(--muted); }
+
+  /* 面板通用 */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+  .panel h2 {
+    font-size: 14px; font-weight: 600; color: var(--muted);
+    letter-spacing: 1px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel h2::before {
+    content: ""; width: 3px; height: 14px; border-radius: 2px;
+    background: linear-gradient(var(--cyan), var(--blue));
+  }
+
+  /* 排名卡片 */
+  .rank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .rank-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    transition: transform .15s, border-color .15s;
+  }
+  .rank-card:hover { transform: translateY(-3px); border-color: rgba(34,211,238,.4); }
+  .rank-card.top { border-color: rgba(34,211,238,.55); box-shadow: 0 0 24px rgba(34,211,238,.12); }
+  .rank-card .rank-badge {
+    position: absolute; top: 14px; right: 14px;
+    font-size: 12px; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 8px;
+  }
+  .rank-card.top .rank-badge { color: var(--cyan); border-color: rgba(34,211,238,.5); background: rgba(34,211,238,.08); }
+  .rank-card .nm { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+  .rank-card .cd { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .rank-card .score { font-size: 28px; font-weight: 700; font-family: "Consolas","Menlo",monospace; }
+  .rank-card .row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .rank-card .row span:last-child { color: var(--text); font-family: "Consolas",monospace; }
+
+  /* 历史表格 */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; letter-spacing: .5px; }
+  tr:hover td { background: rgba(59,130,246,.05); }
+  .pos { color: var(--up); }
+  .neg { color: var(--down); }
+
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 20px; }
+
+  @media (max-width: 600px) {
+    body { padding: 16px 12px; }
+    .hero .action { font-size: 30px; }
+    .rank-grid { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>ETF 动量轮动信号</h1>
-  <div class="sub">每天 13:59 自动计算 · 黄金 / 纳指 / 创业板 / 上证180 · 年化收益 × R² 动量打分</div>
-
-  <div class="card">
-    <div class="latest">
-      <span id="latest-action" class="action">--</span>
-      <span id="latest-name" class="big">--</span>
-      <span id="latest-price" class="tag">--</span>
+  <div class="header">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div>
+        <h1>ETF 动量轮动信号</h1>
+        <div class="sub">量化趋势追踪 · 年化收益 × R² 动量打分</div>
+      </div>
     </div>
-    <div class="sub" id="latest-date" style="margin-top:8px;margin-bottom:0;">--</div>
+    <div class="status">系统运行中</div>
   </div>
 
-  <div class="card">
-    <h2 style="font-size:15px;margin-bottom:12px;">最新排名</h2>
-    <table>
-      <thead><tr><th>名称</th><th>代码</th><th>价格</th><th>动量得分</th><th>年化收益</th><th>R²</th></tr></thead>
-      <tbody id="rank-body"><tr><td colspan="6" class="muted">加载中…</td></tr></tbody>
-    </table>
+  <!-- 当前信号 -->
+  <div class="hero">
+    <div class="label">Current Signal · 最新信号</div>
+    <div id="hero-action" class="action">--</div>
+    <div id="hero-name" class="name">--</div>
+    <div class="meta">
+      <div class="item"><div class="k">代码</div><div class="v" id="hero-code">--</div></div>
+      <div class="item"><div class="k">价格</div><div class="v" id="hero-price">--</div></div>
+      <div class="item"><div class="k">动量得分</div><div class="v" id="hero-score">--</div></div>
+    </div>
+    <div class="label" id="hero-date" style="margin-top:16px;">--</div>
   </div>
 
-  <div class="card">
-    <h2 style="font-size:15px;margin-bottom:12px;">历史操作</h2>
+  <!-- 排名 -->
+  <div class="panel">
+    <h2>动量排名 · Ranking</h2>
+    <div class="rank-grid" id="rank-grid">
+      <div style="color:var(--muted);font-size:13px;">加载中…</div>
+    </div>
+  </div>
+
+  <!-- 历史 -->
+  <div class="panel">
+    <h2>历史操作 · History</h2>
     <table>
       <thead><tr><th>日期</th><th>操作</th><th>持仓</th><th>价格</th><th>得分</th></tr></thead>
-      <tbody id="history-body"><tr><td colspan="5" class="muted">加载中…</td></tr></tbody>
+      <tbody id="history-body"><tr><td colspan="5" style="color:var(--muted);">加载中…</td></tr></tbody>
     </table>
   </div>
 
-  <div class="sub" style="text-align:center;margin-top:16px;">数据仅供研究参考，不构成投资建议</div>
+  <div class="footer">数据仅供研究参考 · 不构成投资建议</div>
 </div>
 
 <script>
+const actionClass = { '买入':'buy', '持有':'hold', '换仓':'switch', '无信号':'none' };
+
 fetch('data/signal_history.json')
   .then(r => r.json())
   .then(history => {
-    if (!history.length) return;
+    if (!history.length) {
+      document.getElementById('rank-grid').innerHTML = '<div style="color:var(--muted);font-size:13px;">暂无数据</div>';
+      document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="color:var(--muted);">暂无数据</td></tr>';
+      return;
+    }
     const latest = history[history.length - 1];
 
-    // 操作标签与颜色
-    const actionMap = { '买入':'buy', '持有':'hold', '换仓':'switch', '无信号':'' };
-    const elA = document.getElementById('latest-action');
+    // 当前信号
+    const elA = document.getElementById('hero-action');
     elA.textContent = latest.操作;
-    elA.className = 'action ' + (actionMap[latest.操作] || '');
-    document.getElementById('latest-name').textContent = latest.持仓名称 || '--';
-    document.getElementById('latest-price').textContent = latest.价格 ? ('价格 ' + latest.价格) : '';
-    document.getElementById('latest-date').textContent = '更新于 ' + latest.日期 + ' ' + latest.时间;
+    elA.className = 'action ' + (actionClass[latest.操作] || 'none');
+    document.getElementById('hero-name').textContent = latest.持仓名称 || '--';
+    document.getElementById('hero-code').textContent = latest.持仓 || '--';
+    document.getElementById('hero-price').textContent = latest.价格 ?? '--';
+    document.getElementById('hero-score').textContent = latest.动量得分 ?? '--';
+    document.getElementById('hero-date').textContent = '更新于 ' + latest.日期 + ' ' + latest.时间;
 
-    // 最新排名
-    const rankBody = document.getElementById('rank-body');
-    rankBody.innerHTML = '';
+    // 排名卡片
+    const grid = document.getElementById('rank-grid');
+    grid.innerHTML = '';
     (latest.排名 || []).forEach((r, i) => {
+      const card = document.createElement('div');
+      card.className = 'rank-card' + (i === 0 ? ' top' : '');
       const scoreCls = (r.动量得分 ?? 0) >= 0 ? 'pos' : 'neg';
-      const tr = document.createElement('tr');
-      if (i === 0) tr.className = 'top';
-      tr.innerHTML = `<td>${r.名称}</td><td class="muted">${r.代码}</td><td>${r.价格 ?? '--'}</td>` +
-        `<td class="${scoreCls}">${r.动量得分 ?? '--'}</td><td>${r.年化收益 ?? '--'}</td><td>${r.R2 ?? '--'}</td>`;
-      rankBody.appendChild(tr);
+      card.innerHTML =
+        `<div class="rank-badge">#${i + 1}</div>` +
+        `<div class="nm">${r.名称}</div>` +
+        `<div class="cd">${r.代码}</div>` +
+        `<div class="score ${scoreCls}">${r.动量得分 ?? '--'}</div>` +
+        `<div class="row"><span>价格</span><span>${r.价格 ?? '--'}</span></div>` +
+        `<div class="row"><span>年化收益</span><span>${((r.年化收益 ?? 0) * 100).toFixed(1)}%</span></div>` +
+        `<div class="row"><span>R²</span><span>${(r.R2 ?? 0).toFixed(3)}</span></div>`;
+      grid.appendChild(card);
     });
 
-    // 历史操作（倒序，最新在上）
+    // 历史表格
     const histBody = document.getElementById('history-body');
     histBody.innerHTML = '';
     [...history].reverse().forEach(h => {
       const tr = document.createElement('tr');
-      const cls = actionMap[h.操作] || '';
-      tr.innerHTML = `<td>${h.日期}</td><td class="${cls}">${h.操作}</td>` +
-        `<td>${h.持仓名称 || '--'}</td><td>${h.价格 ?? '--'}</td><td>${h.动量得分 ?? '--'}</td>`;
+      const cls = actionClass[h.操作] || 'none';
+      tr.innerHTML = `<td>${h.日期}</td><td class="${cls}" style="font-weight:600;">${h.操作}</td>` +
+        `<td>${h.持仓名称 || '--'}</td><td>${h.价格 ?? '--'}</td>` +
+        `<td class="${(h.动量得分 ?? 0) >= 0 ? 'pos' : 'neg'}">${h.动量得分 ?? '--'}</td>`;
       histBody.appendChild(tr);
     });
   })
-  .catch(e => {
-    document.getElementById('rank-body').innerHTML = '<tr><td colspan="6" class="muted">数据加载失败</td></tr>';
-    document.getElementById('history-body').innerHTML = '<tr><td colspan="5" class="muted">数据加载失败</td></tr>';
+  .catch(() => {
+    document.getElementById('rank-grid').innerHTML = '<div style="color:var(--muted);font-size:13px;">数据加载失败</div>';
+    document.getElementById('history-body').innerHTML = '<tr><td colspan="5" style="color:var(--muted);">数据加载失败</td></tr>';
   });
 </script>
 </body>
