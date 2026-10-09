@@ -197,7 +197,7 @@
 <script>
 const actionClass = { '买入':'buy', '持有':'hold', '换仓':'switch', '无信号':'none' };
 
-fetch('data/signal_history.json')
+fetch('data/signal_history.json?t=' + Date.now())
   .then(r => r.json())
   .then(history => {
     if (!history.length) {
